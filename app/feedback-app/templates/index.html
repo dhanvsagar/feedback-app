@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Feedback Form</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Feedback Form</h1>
+        <p class="notice">We respect your privacy — all feedback is collected anonymously</p>
+        <form method="post">
+            <label for="choice">Select Option:</label>
+            <select id="choice" name="choice">
+                <option value="OptA">Excellent</option>
+                <option value="OptB">Very Good</option>
+                <option value="OptC">Good</option>
+                <option value="OptD">Average</option>
+                <option value="OptE">Not Good</option>
+            </select>            
+            <label for="feedback">Feedback:</label>
+            <textarea id="feedback" name="feedback" required></textarea>
+
+
+
+            <button type="submit">Submit</button>
+        </form>
+
+    </div>
+</body>
+</html>
