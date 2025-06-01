@@ -8,17 +8,17 @@
     <div class="container">
         <h1>Feedback Form</h1>
         <p class="notice">We respect your privacy — all feedback is collected anonymously</p>
-        <form method="post">
-            <label for="choice">Select Option:</label>
-            <select id="choice" name="choice">
+        <form action="/submit-feedback" method="post">
+            <label for="rating">Select Option:</label>
+            <select id="rating" name="rating">
                 <option value="OptA">Excellent</option>
                 <option value="OptB">Very Good</option>
                 <option value="OptC">Good</option>
                 <option value="OptD">Average</option>
                 <option value="OptE">Not Good</option>
             </select>            
-            <label for="feedback">Feedback:</label>
-            <textarea id="feedback" name="feedback" required></textarea>
+            <label for="message">Feedback:</label>
+            <textarea id="message" name="feedback" required></textarea>
 
 
 
