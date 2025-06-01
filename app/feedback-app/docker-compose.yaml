@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+
+  postgres:
+    image: postgres:15
+    container_name: feedback_postgres
+    environment:
+      POSTGRES_DB: feedback_db
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U feedback_user -d feedback_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI App
+  fastapi:
+    build: .
+    container_name: feedback_app
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres@postgres:5432/feedback_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
