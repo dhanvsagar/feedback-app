@@ -6,14 +6,16 @@ services:
     image: postgres:15
     container_name: feedback_postgres
     environment:
-      POSTGRES_DB: feedback_db
-      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U feedback_user -d feedback_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -25,13 +27,15 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://postgres@postgres:5432/feedback_db
+      DATABASE_URL: ${DATABASE_URL}
     depends_on:
       postgres:
         condition: service_healthy
     volumes:
       - .:/app
     restart: unless-stopped
+    env_file:
+      - .env
 
 volumes:
   postgres_data:
