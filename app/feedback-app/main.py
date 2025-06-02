@@ -24,8 +24,7 @@ async def submit_feedback(
     message: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    print(f"Received category: {category}")
-    print(f"Received message: {message}")
+
 
 
     feedback = Feedback(rating=rating, message=message)

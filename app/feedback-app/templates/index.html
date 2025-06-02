@@ -8,6 +8,13 @@
     <div class="container">
         <h1>Feedback Form</h1>
         <p class="notice">We respect your privacy — all feedback is collected anonymously</p>
+
+        {% if request.query_params.get('submitted') == 'true' %}
+        <div class="success-message">
+            Thank you for your feedback!
+        </div>
+        {% endif %}   
+     
         <form action="/submit-feedback" method="post">
             <label for="rating">Select Option:</label>
             <select id="rating" name="rating">
@@ -18,10 +25,7 @@
                 <option value="OptE">Not Good</option>
             </select>            
             <label for="message">Feedback:</label>
-            <textarea id="message" name="feedback" required></textarea>
-
-
-
+            <textarea id="message" name="message" required></textarea>
             <button type="submit">Submit</button>
         </form>
 
