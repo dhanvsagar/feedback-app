@@ -37,7 +37,12 @@ class FeedbackReader:
         # read all rows
         try:
             with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
-                cursor.execute("SELECT * FROM feedback ORDER BY id")
+                query = """
+                SELECT rating, message, created_at FROM feedback
+                WHERE created_at >= NOW() - INTERVAL '24 hours'
+                ORDER BY created_at DESC
+                """
+                cursor.execute(query)
                 rows = cursor.fetchall()
 
                 if not rows:
@@ -59,9 +64,7 @@ class FeedbackReader:
     
     def print_feedback_records(self, feedback_data):
         print(f"FEEDBACK RECORDS - Total: {len(feedback_data)}")
-        for i, record in enumerate(feedback_data, 1):
-            for key, value in record.items():
-                print(f"{key}: {value}")
+        print(feedback_data)
 
 
 def main():
