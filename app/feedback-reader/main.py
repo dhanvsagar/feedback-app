@@ -81,8 +81,13 @@ class FeedbackReader:
         positive = sum(1 for f in feedback_data if f.get('sentiment') == 'positive')
         negative = sum(1 for f in feedback_data if f.get('sentiment') == 'negative')
         neutral = sum(1 for f in feedback_data if f.get('sentiment') == 'neutral')
+        total = len(feedback_data)
 
-        print(f"😊 Positive: {positive} | 😞 Negative: {negative} | 😐 Neutral: {neutral}")
+        positive_prc = round((positive / total) * 100, 1) if total > 0 else 0
+        negative_prc = round((negative / total) * 100, 1) if total > 0 else 0
+        neutral_prc = round((neutral / total) * 100, 1) if total > 0 else 0
+
+        print(f"😊 Positive: {positive} ({positive_prc}%) | 😞 Negative: {negative} ({negative_prc}%) | 😐 Neutral: {neutral} ({neutral_prc}%)")
 
         print(feedback_data)
         
