@@ -6,6 +6,7 @@ import time
 import os
 from datetime import datetime, date
 from dotenv import load_dotenv
+from sentiment_analyzer import analyze_sentiment
 
 logger = logging.getLogger(__name__)
 
@@ -57,14 +58,34 @@ class FeedbackReader:
                         if isinstance(value, (datetime, date)):
                             row_dict[key] = value.isoformat()
                     feedback_data.append(row_dict)
+
+                    # Add simple sentiment analysis
+                    if 'message' in row_dict and row_dict['message']:
+                        sentiment = analyze_sentiment(row_dict['message'])
+                        row_dict['sentiment'] = sentiment
+                    else:
+                        row_dict['sentiment'] = 'neutral'
+                    feedback_data.append(row_dict)
                 return feedback_data
         except psycopg2.Error as e:
             logger.error(f"Error reading feedback table: {e}")
             return []
     
     def print_feedback_records(self, feedback_data):
+        if not feedback_data:
+             print("No recent feedback data to display.")
+             return
+        
         print(f"FEEDBACK RECORDS - Total: {len(feedback_data)}")
+        
+        positive = sum(1 for f in feedback_data if f.get('sentiment') == 'positive')
+        negative = sum(1 for f in feedback_data if f.get('sentiment') == 'negative')
+        neutral = sum(1 for f in feedback_data if f.get('sentiment') == 'neutral')
+
+        print(f"😊 Positive: {positive} | 😞 Negative: {negative} | 😐 Neutral: {neutral}")
+
         print(feedback_data)
+        
 
 
 def main():
@@ -73,6 +94,7 @@ def main():
     feedback_reader.connect()
     feedback_data = feedback_reader.read_all_feedback()
     feedback_reader.print_feedback_records(feedback_data)
+
     feedback_reader.disconnect()
     logger.info("Application finished")
 
