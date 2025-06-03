@@ -37,5 +37,21 @@ services:
     env_file:
       - .env
 
+  # Feedback Reader App
+  feedback-reader:
+    build: ../feedback-reader
+    container_name: feedback_reader_app
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+
 volumes:
   postgres_data:
