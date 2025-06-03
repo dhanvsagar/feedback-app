@@ -47,6 +47,8 @@ services:
       DB_NAME: ${POSTGRES_DB}
       DB_USER: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
+      ASANA_API_TOKEN: ${ASANA_API_TOKEN}
+      ASANA_PROJECT_ID: ${ASANA_PROJECT_ID}
     depends_on:
       postgres:
         condition: service_healthy

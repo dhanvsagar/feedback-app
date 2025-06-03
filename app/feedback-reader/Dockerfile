@@ -14,5 +14,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY main.py .
 COPY sentiment_analyzer.py .
+COPY asana_client.py .
 
 CMD ["python", "main.py"]

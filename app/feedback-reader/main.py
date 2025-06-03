@@ -7,6 +7,7 @@ import os
 from datetime import datetime, date
 from dotenv import load_dotenv
 from sentiment_analyzer import analyze_sentiment
+from asana_client import AsanaClient
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +100,13 @@ def main():
     feedback_reader.connect()
     feedback_data = feedback_reader.read_all_feedback()
     feedback_reader.print_feedback_records(feedback_data)
+
+    asana_client = AsanaClient()
+    task_url = asana_client.create_feedback_task(feedback_data)
+    if task_url:
+        print("Asana task created successfully!")
+    else:
+        print("FAILED: Could not create Asana task")
 
     feedback_reader.disconnect()
     logger.info("Application finished")
