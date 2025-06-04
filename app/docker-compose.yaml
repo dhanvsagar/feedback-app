@@ -67,7 +67,7 @@ services:
     command: >
       sh -c "
         apk add --no-cache docker &&
-        echo '*/2 * * * * docker start feedback_reader_app' > /etc/crontabs/root &&
+        echo '0 0 * * * docker start feedback_reader_app' > /etc/crontabs/root &&
         echo 'Cron job installed. Running crond...' &&
         crond -f -l 2
       "
