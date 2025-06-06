@@ -10,9 +10,9 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-@app.get("/status")
+@app.get("/health")
 def status():
-    return {"Status": "OK"}
+    return {"health": "OK"}
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
