@@ -1,0 +1,31 @@
+# System Setup Tasks
+
+---
+- name: Install essential packages
+  apt:
+    name:
+      - curl
+      - wget
+      - git
+      - vim
+      - htop
+      - unzip
+      - tree
+      - ncdu
+      - net-tools
+      - ufw
+      - fail2ban
+      - unattended-upgrades
+    state: present
+  tags: [system, packages]
+
+- name: Set timezone
+  timezone:
+    name: "{{ server_timezone }}"
+  tags: [system]
+
+- name: Set hostname
+  hostname:
+    name: "{{ server_hostname }}"
+  when: server_hostname != ansible_hostname
+  tags: [system]
