@@ -1,0 +1,77 @@
+---
+# SSH Hardening Playbook
+
+- name: SSH Hardening
+  hosts: all
+  become: yes
+  
+  tasks:
+    - name: Warning about SSH hardening
+      pause:
+        prompt: |
+        
+          SSH HARDENING WARNING
+          
+          This will:
+          - Change SSH port to {{ ssh_port | default(2222) }}
+          - Disable password login (keys only)
+          - Disable root login
+          
+          Make sure you have SSH key access before continuing!
+          Press Ctrl+C to cancel, ENTER to continue...
+        seconds: 5
+
+    - name: Backup SSH config
+      copy:
+        src: /etc/ssh/sshd_config
+        dest: /etc/ssh/sshd_config.backup
+        remote_src: yes
+
+    - name: Create hardened SSH config
+      copy:
+        content: |
+          Port {{ ssh_port | default(2222) }}
+          PermitRootLogin no
+          PasswordAuthentication no
+          PubkeyAuthentication yes
+          AllowUsers {{ current_user | default(ansible_user) }} {{ deploy_user | default('deploy') }}
+          MaxAuthTries 3
+          ClientAliveInterval 300
+          ClientAliveCountMax 2
+          X11Forwarding no
+        dest: /etc/ssh/sshd_config
+        backup: yes
+        validate: sshd -t -f %s
+
+    - name: Restart SSH service
+      systemd:
+        name: ssh
+        state: restarted
+
+    - name: Update fail2ban for new SSH port
+      lineinfile:
+        path: /etc/fail2ban/jail.local
+        regexp: '^port = .*'
+        line: "port = {{ ssh_port | default(2222) }}"
+      notify: restart fail2ban
+      ignore_errors: yes
+
+    - name: Block old SSH port in firewall
+      ufw:
+        rule: deny
+        port: "22"
+      when: (ssh_port | default(2222)) != "22"
+
+    - name: Display connection info
+      debug:
+        msg: |
+          SSH Hardening Complete!
+          
+          New connection command:
+          ssh -p {{ ssh_port | default(2222) }} {{ deploy_user | default('deploy') }}@{{ ansible_host | default('localhost') }}
+
+  handlers:
+    - name: restart fail2ban
+      systemd:
+        name: fail2ban
+        state: restarted

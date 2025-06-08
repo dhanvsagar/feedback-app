@@ -1,0 +1,31 @@
+# Application Setup Tasks
+
+---
+- name: Create application directory structure
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0755'
+  with_items:
+    - "/home/{{ deploy_user }}/apps/{{ app_name }}"
+    - "/home/{{ deploy_user }}/apps/{{ app_name }}/data"
+    - "/home/{{ deploy_user }}/apps/{{ app_name }}/data/postgres"
+    - "/home/{{ deploy_user }}/apps/{{ app_name }}/data/redis"
+    - "/home/{{ deploy_user }}/apps/{{ app_name }}/logs"
+    - "/home/{{ deploy_user }}/apps/{{ app_name }}/config"
+    - "/home/{{ deploy_user }}/apps/{{ app_name }}/backups"
+    - "/home/{{ deploy_user }}/apps/{{ app_name }}/scripts"
+  tags: [application]
+
+- name: Create .env file if it doesn't exist
+  copy:
+    src: "/home/{{ deploy_user }}/apps/{{ app_name }}/.env.example"
+    dest: "/home/{{ deploy_user }}/apps/{{ app_name }}/.env"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0600'
+    remote_src: yes
+    force: no
+  tags: [application]

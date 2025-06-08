@@ -1,0 +1,67 @@
+# User Management Tasks
+
+---
+- name: Set current user variable if not defined
+  set_fact:
+    current_user: "{{ current_user | default(ansible_user_id) }}"
+  tags: [users]
+
+- name: Create deployment user
+  user:
+    name: "{{ deploy_user }}"
+    shell: "{{ deploy_user_shell }}"
+    create_home: yes
+    groups: sudo
+    append: yes
+    state: present
+  tags: [users, setup]
+
+- name: Allow deploy user passwordless sudo
+  lineinfile:
+    path: /etc/sudoers.d/{{ deploy_user }}
+    line: "{{ deploy_user }} ALL=(ALL) NOPASSWD:ALL"
+    create: yes
+    mode: '0440'
+    validate: 'visudo -cf %s'
+  tags: [users, sudo]
+
+- name: Create SSH directory for deploy user
+  file:
+    path: "/home/{{ deploy_user }}/.ssh"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0700'
+  tags: [users, ssh]
+
+- name: Generate SSH key pair for deploy user
+  openssh_keypair:
+    path: "/home/{{ deploy_user }}/.ssh/id_rsa"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0600'
+    type: rsa
+    size: 4096
+    comment: "{{ deploy_user }}@{{ ansible_hostname }}"
+    force: no
+  tags: [users, ssh]
+
+- name: Set up SSH access from current user 
+  shell: |
+    # Try to copy SSH keys from current user
+    if [ -f "/home/{{ current_user }}/.ssh/id_rsa.pub" ]; then
+      cat "/home/{{ current_user }}/.ssh/id_rsa.pub" >> "/home/{{ deploy_user }}/.ssh/authorized_keys"
+      echo "Copied SSH key from {{ current_user }}"
+    elif [ -f "/root/.ssh/id_rsa.pub" ]; then
+      cat "/root/.ssh/id_rsa.pub" >> "/home/{{ deploy_user }}/.ssh/authorized_keys"
+      echo "Copied SSH key from root"
+    else
+      echo "No SSH keys found to copy"
+    fi
+    
+    # Set proper permissions
+    chown {{ deploy_user }}:{{ deploy_user }} "/home/{{ deploy_user }}/.ssh/authorized_keys" 2>/dev/null || true
+    chmod 600 "/home/{{ deploy_user }}/.ssh/authorized_keys" 2>/dev/null || true
+  register: ssh_setup_result
+  changed_when: "'Copied SSH key' in ssh_setup_result.stdout"
+  tags: [users, ssh]
