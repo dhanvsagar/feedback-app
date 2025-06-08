@@ -51,17 +51,16 @@ fi
 
 log "Ansible version: $(ansible --version | head -1)"
 
-# # Clone or update repository
-# log "Getting setup files from: $REPO_URL"
-# if [[ -d "$SETUP_DIR" ]]; then
-#     cd "$SETUP_DIR" && git pull
-# else
-#     git clone "$REPO_URL" "$SETUP_DIR"
-#     cd "$SETUP_DIR"
-# fi
+# Clone or update repository
+log "Getting setup files from: $REPO_URL"
+if [[ -d "$SETUP_DIR" ]]; then
+    cd "$SETUP_DIR" && git pull
+else
+    git clone "$REPO_URL" "$SETUP_DIR"
+    cd "$SETUP_DIR"
+fi
 
 cd ansible
-
 
 # Install Ansible requirements if file exists
 if [[ -f "requirements.yml" ]]; then
