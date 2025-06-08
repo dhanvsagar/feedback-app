@@ -1,0 +1,88 @@
+---
+# Main Site Playbook 
+
+- name: Complete Server Setup and Application Deployment
+  hosts: all
+  become: yes
+  gather_facts: yes
+  
+  vars:
+    # Default variables
+    server_hostname: "{{ ansible_hostname }}"
+    server_timezone: UTC
+    current_user: "{{ ansible_user_id }}"
+    deploy_user: deploy
+    deploy_user_shell: /bin/bash
+    ssh_port: 2222
+    app_name: myapp
+    app_domain: localhost
+    app_port: 3000
+    
+  pre_tasks:
+    - name: Clean up conflicting Docker repositories # avoid conflicts
+      shell: |
+        rm -f /etc/apt/sources.list.d/docker*.list
+        rm -f /usr/share/keyrings/docker*.gpg
+        rm -f /usr/share/keyrings/docker-archive-keyring.gpg
+      ignore_errors: yes
+      tags: always
+
+    - name: Update apt cache after cleanup
+      apt:
+        update_cache: yes
+        cache_valid_time: 0
+      tags: always
+
+  tasks:
+    - name: Include system setup tasks
+      include_tasks: playbooks/system.yml
+      tags: [system, packages]
+
+    - name: Include user management tasks
+      include_tasks: playbooks/users.yml
+      tags: [users, setup]
+
+    - name: Include security configuration tasks
+      include_tasks: playbooks/security.yml
+      tags: [security, ssh, firewall, fail2ban]
+
+    - name: Include Docker installation tasks
+      include_tasks: playbooks/docker.yml
+      tags: [docker, containers]
+
+    - name: Include application setup tasks
+      include_tasks: playbooks/application.yml
+      tags: [application, app]
+
+    - name: Include monitoring setup tasks
+      include_tasks: playbooks/monitoring.yml
+      tags: [monitoring, logging]
+
+  post_tasks:
+    - name: Display setup completion message
+      pause:
+        prompt: |
+          
+          SERVER SETUP COMPLETED SUCCESSFULLY!
+          
+            • Admin user: {{ current_user }} (original user)
+            • Deploy user: {{ deploy_user }} (for applications) CREATED
+          
+            • Firewall: ENABLED (ports 22, {{ ssh_port }}, 80, 443, {{ app_port }})
+            • Fail2ban: ENABLED  
+            • SSH hardening: DISABLED (for safety)
+          
+            • Directory: /home/{{ deploy_user }}/apps/{{ app_name }}
+            • Docker: INSTALLED and configured
+          
+          NEXT STEPS - DEPLOY THE APPLICATION:
+            1. Switch to deploy user: sudo su - {{ deploy_user }}
+            2. Go to app directory: cd apps/{{ app_name }}
+            3. Clone your application: git clone https://github.com/user/app.git .
+            4. Configure environment: cp .env.example .env && nano .env
+            5. Deploy: docker-compose up -d
+          
+          Your server is now ready!
+          
+        seconds: 1
+      tags: always

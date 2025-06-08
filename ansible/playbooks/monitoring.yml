@@ -1,0 +1,130 @@
+# Monitoring Setup Tasks
+
+---
+- name: Create system health monitoring script
+  copy:
+    content: |
+      #!/bin/bash
+      # System health monitoring script
+      
+      echo "=== System Health Report - $(date) ==="
+      echo
+      
+      # CPU Usage
+      echo "CPU Usage:"
+      top -bn1 | grep "Cpu(s)" | awk '{print $2 + $4"%"}'
+      echo
+      
+      # Memory Usage
+      echo "Memory Usage:"
+      free -h | awk 'NR==2{printf "Memory: %s/%s (%.2f%%)\n", $3,$2,$3*100/$2}'
+      echo
+      
+      # Disk Usage
+      echo "Disk Usage:"
+      df -h | awk '$NF=="/"{printf "Root: %s/%s (%s)\n", $3,$2,$5}'
+      echo
+      
+      # Docker Status
+      if command -v docker &> /dev/null; then
+          echo "Docker Status:"
+          if systemctl is-active --quiet docker; then
+              echo "Docker: Running"
+              echo "Containers: $(docker ps -q | wc -l) running"
+          else
+              echo "Docker: Not running"
+          fi
+          echo
+      fi
+      
+      # Load Average
+      echo "Load Average:"
+      uptime | awk -F'load average:' '{print $2}'
+      echo
+      
+      echo "=== End Report ==="
+    dest: /usr/local/bin/system-health.sh
+    mode: '0755'
+  tags: [monitoring]
+
+- name: Create Docker monitoring script
+  copy:
+    content: |
+      #!/bin/bash
+      # Docker monitoring script
+      
+      echo "=== Docker Monitor - $(date) ==="
+      
+      if ! command -v docker &> /dev/null; then
+          echo "Docker is not installed"
+          exit 1
+      fi
+      
+      if ! systemctl is-active --quiet docker; then
+          echo "Docker service is not running"
+          exit 1
+      fi
+      
+      # Container status
+      echo "Container Status:"
+      docker ps
+      echo
+      
+      # Resource usage (if containers are running)
+      if [ "$(docker ps -q)" ]; then
+          echo "Resource Usage:"
+          docker stats --no-stream
+          echo
+      else
+          echo "No running containers"
+          echo
+      fi
+      
+      # Disk usage
+      echo "Docker Disk Usage:"
+      docker system df
+      echo
+      
+      # Images
+      echo "Docker Images:"
+      docker images
+      echo
+      
+      echo "=== End Docker Report ==="
+    dest: "/home/{{ deploy_user }}/docker-monitor.sh"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0755'
+  tags: [monitoring]
+
+- name: Create log rotation configuration
+  copy:
+    content: |
+      /home/{{ deploy_user }}/apps/*/logs/*.log {
+          daily
+          missingok
+          rotate 14
+          compress
+          delaycompress
+          notifempty
+          create 644 {{ deploy_user }} {{ deploy_user }}
+          postrotate
+              docker kill --signal="USR1" $(docker ps -q) 2>/dev/null || true
+          endscript
+      }
+    dest: /etc/logrotate.d/docker-containers
+    mode: '0644'
+  tags: [monitoring]
+
+- name: Display monitoring setup information
+  debug:
+    msg: |
+      📊 Monitoring Setup Complete:
+      - System health script: /usr/local/bin/system-health.sh
+      - Docker monitor script: /home/{{ deploy_user }}/docker-monitor.sh
+      - Log rotation: Configured for application logs
+      
+      Usage:
+      - system-health.sh
+      - /home/{{ deploy_user }}/docker-monitor.sh
+  tags: [monitoring]
