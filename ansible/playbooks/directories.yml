@@ -1,0 +1,21 @@
+# Basic Directory Setup Tasks
+
+---
+- name: Create basic apps directory structure
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0755'
+  with_items:
+    - "/home/{{ deploy_user }}/apps"
+  tags: [directories]
+
+- name: Set proper ownership for deploy user home
+  file:
+    path: "/home/{{ deploy_user }}"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    state: directory
+  tags: [directories]

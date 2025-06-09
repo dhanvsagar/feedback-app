@@ -13,11 +13,8 @@
     current_user: "{{ ansible_user_id }}"
     deploy_user: deploy
     deploy_user_shell: /bin/bash
-    ssh_port: 2222
-    app_name: myapp
-    app_domain: localhost
-    app_port: 3000
-    
+    ssh_port: 22
+
   pre_tasks:
     - name: Clean up conflicting Docker repositories # avoid conflicts
       shell: |
@@ -50,15 +47,34 @@
       include_tasks: playbooks/docker.yml
       tags: [docker, containers]
 
-    - name: Include application setup tasks
-      include_tasks: playbooks/application.yml
-      tags: [application, app]
+    - name: Include basic directory setup
+      include_tasks: playbooks/directories.yml
+      tags: [directories, setup]
 
     - name: Include monitoring setup tasks
       include_tasks: playbooks/monitoring.yml
       tags: [monitoring, logging]
 
+    - name: Copy deployment script to deploy user home
+      copy:
+        src: "{{ playbook_dir }}/../deploy-app.sh"
+        dest: "/home/{{ deploy_user }}/apps/deploy-app.sh"
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0755'
+      tags: [deployment, script]
+
+    - name: Copy app directory to deploy user home
+      copy:
+        src: "{{ playbook_dir }}/../app/"
+        dest: "/home/{{ deploy_user }}/apps/{{ app_name }}"
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: preserve
+      tags: [deployment, app]
+
   post_tasks:
+
     - name: Display setup completion message
       pause:
         prompt: |
@@ -74,15 +90,17 @@
           
             • Directory: /home/{{ deploy_user }}/apps/{{ app_name }}
             • Docker: INSTALLED and configured
+
+            . App directories: CREATED
+            • Proper ownership: SET
           
           NEXT STEPS - DEPLOY THE APPLICATION:
             1. Switch to deploy user: sudo su - {{ deploy_user }}
-            2. Go to app directory: cd apps/{{ app_name }}
-            3. Clone your application: git clone https://github.com/user/app.git .
-            4. Configure environment: cp .env.example .env && nano .env
-            5. Deploy: docker-compose up -d
+            2. cd /home/{{ deploy_user }}/apps/
+            2. Update .env with the values
+            2. Run the deployment script: ./deploy-app.sh
           
-          Your server is now ready!
+          Your server is now ready for application deployment!
           
         seconds: 1
       tags: always

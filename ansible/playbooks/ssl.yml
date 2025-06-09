@@ -1,0 +1,45 @@
+# SSL/Certbot Setup Tasks
+
+- name: Install certbot on host
+  apt:
+    name:
+      - certbot
+      - python3-certbot-nginx
+    state: present
+    update_cache: yes
+
+- name: Start services (nginx will fail initially, that's OK)
+  shell: |
+    cd /home/{{ deploy_user }}/apps/{{ app_name }}
+    docker-compose up -d postgres fastapi
+    docker-compose up -d nginx || true
+  become_user: "{{ deploy_user }}"
+
+- name: Generate SSL certificate with host certbot
+  shell: |
+    certbot certonly \
+      --webroot \
+      --webroot-path=/home/{{ deploy_user }}/apps/{{ app_name }}/nginx/ssl \
+      --email {{ ssl_email }} \
+      --agree-tos \
+      --no-eff-email \
+      -d {{ app_domain }}
+  when: not ssl_cert_exists.stat.exists
+
+- name: Copy certificates to docker volume location
+  shell: |
+    mkdir -p /home/{{ deploy_user }}/apps/{{ app_name }}/nginx/ssl/live/{{ app_domain }}
+    cp /etc/letsencrypt/live/{{ app_domain }}/* /home/{{ deploy_user }}/apps/{{ app_name }}/nginx/ssl/live/{{ app_domain }}/
+    chown -R {{ deploy_user }}:{{ deploy_user }} /home/{{ deploy_user }}/apps/{{ app_name }}/nginx/ssl
+
+- name: Restart nginx with certificates
+  shell: |
+    cd /home/{{ deploy_user }}/apps/{{ app_name }}
+    docker-compose restart nginx
+
+- name: Set up auto-renewal cron job (host-based)
+  cron:
+    name: "Renew SSL certificates"
+    minute: "0"
+    hour: "3"
+    job: "certbot renew --quiet && cp /etc/letsencrypt/live/{{ app_domain }}/* /home/{{ deploy_user }}/apps/{{ app_name }}/nginx/ssl/live/{{ app_domain }}/ && cd /home/{{ deploy_user }}/apps/{{ app_name }} && docker-compose restart nginx"

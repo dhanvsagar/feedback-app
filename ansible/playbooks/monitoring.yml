@@ -119,7 +119,7 @@
 - name: Display monitoring setup information
   debug:
     msg: |
-      📊 Monitoring Setup Complete:
+      Monitoring Setup Complete:
       - System health script: /usr/local/bin/system-health.sh
       - Docker monitor script: /home/{{ deploy_user }}/docker-monitor.sh
       - Log rotation: Configured for application logs

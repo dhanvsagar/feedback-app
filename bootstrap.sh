@@ -60,7 +60,14 @@ else
     cd "$SETUP_DIR"
 fi
 
-cd ansible
+# Navigate to ansible directory
+if [[ -d "ansible" ]]; then
+    cd ansible
+else
+    error "Ansible directory not found in repository"
+    exit 1
+fi
+
 
 # Install Ansible requirements if file exists
 if [[ -f "requirements.yml" ]]; then
