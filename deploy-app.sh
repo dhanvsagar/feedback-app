@@ -99,7 +99,7 @@ if [[ "$APP_DOMAIN" != "localhost" && "$APP_DOMAIN" != "127.0.0.1" ]]; then
     info "Generating SSL certificate..."
     if sudo certbot certonly \
         --webroot \
-        --webroot-path="$(pwd)/nginx/ssl" \
+        --webroot-path="$(pwd)/data/certbot/www" \
         --email "$SSL_EMAIL" \
         --agree-tos \
         --no-eff-email \
